@@ -1,0 +1,10 @@
+# env files
+backend/.env
+medivision-react/.env
+
+# node modules
+backend/node_modules
+medivision-react/node_modules
+
+# frontend build output
+medivision-react/dist

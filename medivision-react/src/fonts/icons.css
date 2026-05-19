@@ -1,0 +1,15 @@
+@font-face {
+    font-family: 'CustomIconFont';
+    src: url('JetBrainsMonoNerdFontPropo-Regular.ttf') format('truetype');
+    font-display: swap;
+}
+
+.icon {
+    font-family: 'JetBrainsMono Nerd Font Propo';
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+}
