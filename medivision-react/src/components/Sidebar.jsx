@@ -2,19 +2,9 @@ import { useEffect, useRef, useState } from "react";
 
 import Medi from "../assets/MediVisionLogo.svg?react";
 
-import {
-  FiBarChart2,
-  FiInfo,
-  FiMessageSquare,
-  FiWatch,
-} from "react-icons/fi";
+import { FiBarChart2, FiInfo, FiMessageSquare, FiWatch } from "react-icons/fi";
 
-function Sidebar({
-  setRendering,
-  setAI,
-  setUser,
-  callBackend,
-}) {
+function Sidebar({ setRendering, setAI, setUser, callBackend }) {
   // ===== Zustände =====
   // showMenu -> steuert ob Wearable-Menü sichtbar ist
   const [showMenu, setShowMenu] = useState(false);
@@ -28,10 +18,7 @@ function Sidebar({
   // wird das Wearable-Menü geschlossen
   useEffect(() => {
     function handleClickOutside(event) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowMenu(false);
       }
     }
@@ -39,10 +26,7 @@ function Sidebar({
     document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -59,8 +43,20 @@ function Sidebar({
   // Sendet Anfrage an Analyse-Workflow
   function analyse() {
     callBackend("n8nAnalyse")
-      .then((r) => r.json())
-      .then((json) => console.log(json));
+      .then((res) => res.blob())
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "analyse.pdf";
+
+        document.body.appendChild(a);
+        a.click();
+
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      });
   }
 
   // ===== Wearable verbinden =====
@@ -124,10 +120,7 @@ function Sidebar({
 
         {/* Wearable-Menü */}
         <div ref={dropdownRef} className="button2">
-          <button
-            className="button2"
-            onClick={() => setShowMenu(!showMenu)}
-          >
+          <button className="button2" onClick={() => setShowMenu(!showMenu)}>
             <FiWatch size={25} />
           </button>
 

@@ -107,7 +107,7 @@ F --> H
    Dann Variablen eintragen:
    ```env
    #BACKEND
-   VITE_BACKEND_URL=port_of_backend
+   VITE_BACKEND_URL=your_backend_url
    ```
 
 ## Anwendung starten

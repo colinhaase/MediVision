@@ -1,36 +1,26 @@
 import express from "express";
 import multer from "multer";
+import PDFDocument from "pdfkit";
 
 import dotenv from "dotenv";
 dotenv.config();
 
-// ===== Router erstellen =====
 const n8nAnalyse = express.Router();
-
-// Multer verarbeitet FormData ohne Dateien
 const upload = multer();
 
-// ===== Analyse Route =====
 n8nAnalyse.post("/", upload.none(), async (req, res) => {
   try {
-    // UUID der aktuellen Sitzung auslesen
     const { UUID } = req.body;
 
-    // ===== Daten für n8n vorbereiten =====
+    // ===== Request an n8n =====
     const formData = new FormData();
-
     formData.append("sessionID", UUID);
-
-    // Nachricht an den AI-Workflow
     formData.append(
       "user",
       "Analysiere den Chat wie im Systemprompt beschrieben"
     );
-
-    // Signalisiert dass Chat danach gelöscht werden soll
     formData.append("deletion", "true");
 
-    // ===== Anfrage an n8n senden =====
     const response = await fetch(process.env.N8N_URL, {
       method: "POST",
       headers: {
@@ -40,21 +30,94 @@ n8nAnalyse.post("/", upload.none(), async (req, res) => {
       body: formData,
     });
 
-    // Fehler falls n8n nicht erreichbar
     if (!response.ok) {
       throw new Error("n8n error");
     }
 
-    // Antwort von n8n auslesen
-    const answer = await response.json();
+    // ===== n8n OUTPUT FIX =====
+    const raw = await response.json();
 
-    // Antwort an Frontend zurückgeben
-    res.json(answer);
+    const outputString = raw?.[0]?.output || "";
+
+    const cleaned = outputString
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
+
+    const data = JSON.parse(cleaned);
+
+    // ===== PDF ERSTELLUNG =====
+    const doc = new PDFDocument({ margin: 40 });
+
+    const chunks = [];
+    doc.on("data", (c) => chunks.push(c));
+
+    doc.on("end", () => {
+      const result = Buffer.concat(chunks);
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        'attachment; filename="analyse.pdf"'
+      );
+
+      res.send(result);
+    });
+
+    // ===== HEADER =====
+    doc.fontSize(16).text("Medizinische Analyse");
+    doc.moveDown();
+
+    // ===== BASISINFORMATIONEN =====
+    const b = data.basisinformationen || {};
+
+    doc.fontSize(12).text(`Geschlecht: ${b.geschlecht || "unbekannt"}`);
+    doc.text(`Alter: ${b.alter || "unbekannt"}`);
+    doc.text(`Symptome: ${b.symptome || "unbekannt"}`);
+
+    doc.moveDown();
+
+    // ===== BILDBESCHREIBUNG =====
+    doc.fontSize(14).text("Bildbeschreibung");
+    doc.fontSize(12).text(data.bildbeschreibung || "");
+    doc.moveDown();
+
+    // ===== DIAGNOSETABELLE =====
+    doc.fontSize(14).text("Differentialdiagnosen");
+    doc.moveDown();
+
+    // Tabellenkopf
+    doc.fontSize(12).text("Diagnose", 50);
+    doc.text("Begründung", 200);
+    doc.text("Wahrscheinlichkeit", 450);
+
+    doc.moveDown();
+
+    const diagnoses = data.differentialdiagnosen || [];
+
+    diagnoses.forEach((d) => {
+      doc.text(d.diagnose || "", 50);
+      doc.text(d.begruendung || "", 200);
+      doc.text(`${d.wahrscheinlichkeit || 0}%`, 450);
+      doc.moveDown();
+    });
+
+    doc.moveDown();
+
+    // ===== EMPFEHLUNG =====
+    doc.fontSize(14).text("Empfehlung");
+    doc.fontSize(12).text(data.empfehlung || "");
+    doc.moveDown();
+
+    // ===== HINWEIS =====
+    doc.fontSize(10).text(data.wichtiger_hinweis || "");
+
+    doc.end();
   } catch (error) {
     console.error(error);
 
-    res.json({
-      answer: `${error}`,
+    res.status(500).json({
+      error: String(error),
     });
   }
 });
