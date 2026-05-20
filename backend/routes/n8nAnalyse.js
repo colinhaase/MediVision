@@ -12,12 +12,12 @@ n8nAnalyse.post("/", upload.none(), async (req, res) => {
   try {
     const { UUID } = req.body;
 
-    // ===== Request an n8n =====
+    // ===== Request n8n =====
     const formData = new FormData();
     formData.append("sessionID", UUID);
     formData.append(
       "user",
-      "Analysiere den Chat wie im Systemprompt beschrieben"
+      "Analysiere den Chat wie im Systemprompt beschrieben",
     );
     formData.append("deletion", "true");
 
@@ -34,83 +34,125 @@ n8nAnalyse.post("/", upload.none(), async (req, res) => {
       throw new Error("n8n error");
     }
 
-    // ===== n8n OUTPUT FIX =====
-    const raw = await response.json();
+    // ===== ANTWORT BEHANDELN =====
+    const fullResponse = await response.json();
 
-    const outputString = raw?.[0]?.output || "";
+    let raw = fullResponse.answer;
 
-    const cleaned = outputString
+    // entfernt ```json und ```
+    raw = raw
       .replace(/```json/g, "")
       .replace(/```/g, "")
       .trim();
 
-    const data = JSON.parse(cleaned);
+    const parsed = JSON.parse(raw);
 
-    // ===== PDF ERSTELLUNG =====
-    const doc = new PDFDocument({ margin: 40 });
+    console.log(parsed);
 
-    const chunks = [];
-    doc.on("data", (c) => chunks.push(c));
-
-    doc.on("end", () => {
-      const result = Buffer.concat(chunks);
-
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader(
-        "Content-Disposition",
-        'attachment; filename="analyse.pdf"'
-      );
-
-      res.send(result);
+    // ===== PDF ERSTELLEN =====
+    const doc = new PDFDocument({
+      margins: {
+        top: 36,
+        bottom: 36,
+        left: 36,
+        right: 36,
+      },
     });
 
-    // ===== HEADER =====
-    doc.fontSize(16).text("Medizinische Analyse");
-    doc.moveDown();
+    //metadata
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "inline; filename=analyse.pdf");
 
-    // ===== BASISINFORMATIONEN =====
-    const b = data.basisinformationen || {};
+    doc.pipe(res);
 
-    doc.fontSize(12).text(`Geschlecht: ${b.geschlecht || "unbekannt"}`);
-    doc.text(`Alter: ${b.alter || "unbekannt"}`);
-    doc.text(`Symptome: ${b.symptome || "unbekannt"}`);
-
-    doc.moveDown();
-
-    // ===== BILDBESCHREIBUNG =====
-    doc.fontSize(14).text("Bildbeschreibung");
-    doc.fontSize(12).text(data.bildbeschreibung || "");
-    doc.moveDown();
-
-    // ===== DIAGNOSETABELLE =====
-    doc.fontSize(14).text("Differentialdiagnosen");
-    doc.moveDown();
-
-    // Tabellenkopf
-    doc.fontSize(12).text("Diagnose", 50);
-    doc.text("Begründung", 200);
-    doc.text("Wahrscheinlichkeit", 450);
+    //überschrift
+    doc.font("Helvetica-Bold").fontSize(20);
+    doc.text("Medizinische Analyse", {
+      underline: true,
+    });
 
     doc.moveDown();
 
-    const diagnoses = data.differentialdiagnosen || [];
+    //basisinformationen
+    doc.font("Helvetica-Bold").fontSize(14);
+    doc.text("Basisinformationen:");
 
-    diagnoses.forEach((d) => {
-      doc.text(d.diagnose || "", 50);
-      doc.text(d.begruendung || "", 200);
-      doc.text(`${d.wahrscheinlichkeit || 0}%`, 450);
+    doc.font("Helvetica").fontSize(12);
+    doc.text(`Geschlecht: ${parsed.basisinformationen.geschlecht}`);
+    doc.text(`Alter: ${parsed.basisinformationen.alter}`);
+    doc.text(`Symptome: ${parsed.basisinformationen.symptome}`);
+
+    doc.moveDown();
+
+    //diagnosen
+    doc.font("Helvetica-Bold").fontSize(14);
+    doc.text("Differentialdiagnosen:");
+
+    doc.font("Helvetica").fontSize(12);
+    const diagnosen = parsed.differentialdiagnosen;
+    doc.table({
+      columnStyles: [150, 250, 150],
+      defaultStyle: { padding: 5},
+      data: [
+        ["Diagnose", "Begründung", "Wahrscheinlichkeit"],
+
+        [
+          diagnosen[0].diagnose,
+          diagnosen[0].begruendung,
+          `${diagnosen[0].wahrscheinlichkeit}`,
+        ],
+        [
+          diagnosen[1].diagnose,
+          diagnosen[1].begruendung,
+          `${diagnosen[1].wahrscheinlichkeit}`,
+        ],
+        [
+          diagnosen[2].diagnose,
+          diagnosen[2].begruendung,
+          `${diagnosen[2].wahrscheinlichkeit}`,
+        ],
+        [
+          diagnosen[3].diagnose,
+          diagnosen[3].begruendung,
+          `${diagnosen[3].wahrscheinlichkeit}`,
+        ],
+      ],
+    });
+
+    doc.moveDown();
+
+    // prüfen ob element auf seite passt
+    function addSectionWithBreak(doc, contentFunction) {
+      // Check if adding this section would go beyond the bottom margin
+      if (doc.y + 200 > doc.page.height - doc.page.margins.bottom) {
+        // 200 is a safe estimate
+        doc.addPage();
+      }
+      contentFunction();
+    }
+
+    // empehlung
+    addSectionWithBreak(doc, () => {
+      doc.font("Helvetica-Bold").fontSize(14);
+      doc.text("Empfehlung:");
+      doc.font("Helvetica").fontSize(12);
+      doc.text(parsed.empfehlung);
       doc.moveDown();
     });
 
-    doc.moveDown();
-
-    // ===== EMPFEHLUNG =====
-    doc.fontSize(14).text("Empfehlung");
-    doc.fontSize(12).text(data.empfehlung || "");
-    doc.moveDown();
-
-    // ===== HINWEIS =====
-    doc.fontSize(10).text(data.wichtiger_hinweis || "");
+    // Wichtiger Hinweis
+    addSectionWithBreak(doc, () => {
+      doc.font("Helvetica-Bold").fontSize(14);
+      doc.text("Wichtiger Hinweis:");
+      doc.font("Helvetica").fontSize(12);
+      doc.text(
+        "Dieses Dokument zählt nur als erste Einschätzung. Für eine echte Diagnose wenden Sie sich bitte an Ihren Haus und/oder Fachartzt",
+      );
+      doc.moveDown();
+      doc.text(
+        "PS: Hierbei handelt es sich um ein Schulprojekt der 12. Klasse des Berfulichen Gymnasiums Technik",
+      );
+    });
 
     doc.end();
   } catch (error) {
