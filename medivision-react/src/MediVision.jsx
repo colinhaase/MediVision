@@ -14,7 +14,7 @@ function MediVision() {
   // ===== Eindeutige Sitzungs-ID =====
   // Wird einmal beim Start erstellt und für alle Backend-Anfragen genutzt
   const [UUID] = useState(
-    `${new Date().toLocaleTimeString()}/${crypto.randomUUID()}`
+    `${new Date().toLocaleTimeString()}/${crypto.randomUUID()}`,
   );
 
   // ===== Hauptzustände der Anwendung =====
@@ -64,10 +64,8 @@ function MediVision() {
     const interval = setInterval(() => {
       setChat((prev) =>
         prev.map((msg) =>
-          msg.remaining > 0
-            ? { ...msg, remaining: msg.remaining - 1 }
-            : msg
-        )
+          msg.remaining > 0 ? { ...msg, remaining: msg.remaining - 1 } : msg,
+        ),
       );
     }, 1000);
 
@@ -96,11 +94,7 @@ function MediVision() {
     // werden alte Timer sofort beendet
     if (ai.source === "wearable") {
       setChat((prev) =>
-        prev.map((msg) =>
-          msg.remaining > 0
-            ? { ...msg, remaining: 0 }
-            : msg
-        )
+        prev.map((msg) => (msg.remaining > 0 ? { ...msg, remaining: 0 } : msg)),
       );
     }
 
@@ -118,8 +112,7 @@ function MediVision() {
     if (!el) return;
 
     function handleScroll() {
-      const distance =
-        el.scrollHeight - el.scrollTop - el.clientHeight;
+      const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
 
       isAtBottom.current = distance < 80;
     }
@@ -141,8 +134,7 @@ function MediVision() {
 
     const lastMessage = chat[chat.length - 1];
 
-    const shouldScroll =
-      lastMessage.sender === "user" || isAtBottom.current;
+    const shouldScroll = lastMessage.sender === "user" || isAtBottom.current;
 
     if (!shouldScroll) return;
 
@@ -168,10 +160,7 @@ function MediVision() {
         return (
           <>
             <div className="chat-box">
-              <Chat
-                chat={chat}
-                waitForResponse={waitForResponse}
-              />
+              <Chat chat={chat} waitForResponse={waitForResponse} />
             </div>
 
             <div className="input-box">
@@ -229,5 +218,5 @@ export default MediVision;
 createRoot(document.getElementById("medivision")).render(
   <StrictMode>
     <MediVision />
-  </StrictMode>
+  </StrictMode>,
 );

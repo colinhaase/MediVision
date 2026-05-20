@@ -36,8 +36,7 @@ wearableConnect.post("/", upload.none(), async (req, res) => {
       method: "POST",
       headers: {
         accept: "application/json",
-        "Content-Type":
-          "application/x-www-form-urlencoded",
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: params,
     });
@@ -59,10 +58,9 @@ wearableConnect.post("/", upload.none(), async (req, res) => {
         method: "GET",
         headers: {
           accept: "application/json",
-          "X-Open-Wearables-API-Key":
-            process.env.API_KEY,
+          "X-Open-Wearables-API-Key": process.env.API_KEY,
         },
-      }
+      },
     );
 
     if (!fetchUser.ok) {
@@ -82,24 +80,20 @@ wearableConnect.post("/", upload.none(), async (req, res) => {
 
     // ===== Neuen User erstellen =====
     if (id == undefined) {
-      const createUser = await fetch(
-        `${URL}/api/v1/users`,
-        {
-          method: "POST",
-          headers: {
-            accept: "application/json",
-            "Content-Type": "application/json",
-            "X-Open-Wearables-API-Key":
-              process.env.API_KEY,
-          },
-          body: JSON.stringify({
-            first_name: UUID,
-            last_name: null,
-            email: "temp@temp.com",
-            external_user_id: UUID,
-          }),
-        }
-      );
+      const createUser = await fetch(`${URL}/api/v1/users`, {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "Content-Type": "application/json",
+          "X-Open-Wearables-API-Key": process.env.API_KEY,
+        },
+        body: JSON.stringify({
+          first_name: UUID,
+          last_name: null,
+          email: "temp@temp.com",
+          external_user_id: UUID,
+        }),
+      });
 
       if (!createUser.ok) {
         throw new Error("User creation failed");
@@ -127,7 +121,7 @@ wearableConnect.post("/", upload.none(), async (req, res) => {
           accept: "application/json",
           Authorization: `Bearer ${token.access_token}`,
         },
-      }
+      },
     );
 
     if (!fetchCode.ok) {
@@ -148,8 +142,7 @@ wearableConnect.post("/", upload.none(), async (req, res) => {
     // ===== Auf Verbindung warten =====
 
     // Kleine Wartefunktion
-    const delay = (ms) =>
-      new Promise((resolve) => setTimeout(resolve, ms));
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
     let connections = [];
 
@@ -159,10 +152,7 @@ wearableConnect.post("/", upload.none(), async (req, res) => {
     const timeout = 300000;
 
     // Prüft jede Sekunde ob Gerät verbunden wurde
-    while (
-      connections.length == 0 &&
-      Date.now() - start <= timeout
-    ) {
+    while (connections.length == 0 && Date.now() - start <= timeout) {
       // Prüfen ob diese Session noch gültig ist
       if (deletionActivity.get(userId) !== sessionId) {
         console.log("cancelled delete");
@@ -175,18 +165,14 @@ wearableConnect.post("/", upload.none(), async (req, res) => {
           method: "GET",
           headers: {
             accept: "application/json",
-            "X-Open-Wearables-API-Key":
-              process.env.API_KEY,
-            Authorization:
-              `Bearer ${token.access_token}`,
+            "X-Open-Wearables-API-Key": process.env.API_KEY,
+            Authorization: `Bearer ${token.access_token}`,
           },
-        }
+        },
       );
 
       if (!fetchConnections.ok) {
-        throw new Error(
-          "Could not fetch Connections"
-        );
+        throw new Error("Could not fetch Connections");
       }
 
       connections = await fetchConnections.json();
@@ -204,16 +190,12 @@ wearableConnect.post("/", upload.none(), async (req, res) => {
         return;
       }
 
-      const deleteUser = await fetch(
-        `${URL}/api/v1/users/${userId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization:
-              `Bearer ${token.access_token}`,
-          },
-        }
-      );
+      const deleteUser = await fetch(`${URL}/api/v1/users/${userId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token.access_token}`,
+        },
+      });
 
       if (!deleteUser.ok) {
         throw new Error("Could not delete User");

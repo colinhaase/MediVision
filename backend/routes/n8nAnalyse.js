@@ -92,7 +92,7 @@ n8nAnalyse.post("/", upload.none(), async (req, res) => {
     const diagnosen = parsed.differentialdiagnosen;
     doc.table({
       columnStyles: [150, 250, 150],
-      defaultStyle: { padding: 5},
+      defaultStyle: { padding: 5 },
       data: [
         ["Diagnose", "Begründung", "Wahrscheinlichkeit"],
 

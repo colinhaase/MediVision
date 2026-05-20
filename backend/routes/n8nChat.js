@@ -34,13 +34,13 @@ n8nChat.post("/", upload.single("image"), async (req, res) => {
       formData.append(
         "image",
         new Blob([file.buffer], { type: file.mimetype }),
-        file.originalname
+        file.originalname,
       );
 
       // Zusatzinformation für Bildanalyse
       formData.append(
         "imageText",
-        "analysire das bild nach den gegebenen anweisungen"
+        "analysire das bild nach den gegebenen anweisungen",
       );
     }
 

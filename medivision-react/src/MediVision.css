@@ -268,7 +268,7 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .button2:hover {
-  background-color:#313244;
+  background-color: #313244;
 }
 
 .button3 {
@@ -283,7 +283,7 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .button3:hover {
-  background-color:#4a4b63;
+  background-color: #4a4b63;
 }
 
 .dropdown {

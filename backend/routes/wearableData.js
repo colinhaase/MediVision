@@ -31,8 +31,7 @@ wearableData.post("/", upload.none(), async (req, res) => {
       method: "POST",
       headers: {
         accept: "application/json",
-        "Content-Type":
-          "application/x-www-form-urlencoded",
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: params,
     });
@@ -52,10 +51,9 @@ wearableData.post("/", upload.none(), async (req, res) => {
         method: "GET",
         headers: {
           accept: "application/json",
-          "X-Open-Wearables-API-Key":
-            process.env.API_KEY,
+          "X-Open-Wearables-API-Key": process.env.API_KEY,
         },
-      }
+      },
     );
 
     if (!fetchUser.ok) {
@@ -98,10 +96,9 @@ wearableData.post("/", upload.none(), async (req, res) => {
       {
         headers: {
           accept: "application/json",
-          "X-Open-Wearables-API-Key":
-            process.env.API_KEY,
+          "X-Open-Wearables-API-Key": process.env.API_KEY,
         },
-      }
+      },
     );
 
     if (!fetchActivity.ok) {
@@ -120,10 +117,9 @@ wearableData.post("/", upload.none(), async (req, res) => {
       {
         headers: {
           accept: "application/json",
-          "X-Open-Wearables-API-Key":
-            process.env.API_KEY,
+          "X-Open-Wearables-API-Key": process.env.API_KEY,
         },
-      }
+      },
     );
 
     if (!fetchSleep.ok) {
@@ -139,32 +135,25 @@ wearableData.post("/", upload.none(), async (req, res) => {
     // ===== Timeseries Funktion =====
     // Holt detaillierte Zeitreihen-Daten
     async function fetchDetailed(types) {
-      const typesParams = types
-        .map((t) => `types=${t}`)
-        .join("&");
+      const typesParams = types.map((t) => `types=${t}`).join("&");
 
       const fetchTimeseries = await fetch(
         `${URL}/api/v1/users/${id}/timeseries?${typesParams}&resolution=1hour&limit=30&start_time=${start_date}&end_time=${end_date}`,
         {
           headers: {
             accept: "application/json",
-            "X-Open-Wearables-API-Key":
-              process.env.API_KEY,
-            Authorization:
-              `Bearer ${token.access_token}`,
+            "X-Open-Wearables-API-Key": process.env.API_KEY,
+            Authorization: `Bearer ${token.access_token}`,
           },
-        }
+        },
       );
 
       if (!fetchTimeseries.ok) {
-        const errorText =
-          await fetchTimeseries.text();
+        const errorText = await fetchTimeseries.text();
 
         console.log(errorText);
 
-        throw new Error(
-          `Could not fetch ${typesParams}`
-        );
+        throw new Error(`Could not fetch ${typesParams}`);
       }
 
       return await fetchTimeseries.json();
@@ -208,15 +197,10 @@ wearableData.post("/", upload.none(), async (req, res) => {
     ]);
 
     // Stoffwechsel
-    const metabolicDetailed = await fetchDetailed([
-      "blood_glucose",
-    ]);
+    const metabolicDetailed = await fetchDetailed(["blood_glucose"]);
 
     // Aktivität
-    const activityDetailed = await fetchDetailed([
-      "steps",
-      "exercise_time",
-    ]);
+    const activityDetailed = await fetchDetailed(["steps", "exercise_time"]);
 
     // Körperdaten
     const bodyDetailed = await fetchDetailed([
@@ -247,24 +231,19 @@ wearableData.post("/", upload.none(), async (req, res) => {
 
     // ===== Leere Daten entfernen =====
     const wearable = Object.fromEntries(
-      Object.entries(wearableRaw).filter(
-        ([_, value]) => {
-          if (!value) return false;
+      Object.entries(wearableRaw).filter(([_, value]) => {
+        if (!value) return false;
 
-          if (Array.isArray(value)) {
-            return value.length > 0;
-          }
-
-          if (
-            typeof value === "object" &&
-            Array.isArray(value.data)
-          ) {
-            return value.data.length > 0;
-          }
-
-          return false;
+        if (Array.isArray(value)) {
+          return value.length > 0;
         }
-      )
+
+        if (typeof value === "object" && Array.isArray(value.data)) {
+          return value.data.length > 0;
+        }
+
+        return false;
+      }),
     );
 
     // ===== Daten an AI senden =====
@@ -278,17 +257,14 @@ wearableData.post("/", upload.none(), async (req, res) => {
         message:
           "Der Nutzer hat wearable Daten angegeben analysiere Sie anhand des Systemprompts",
         wearable,
-      })
+      }),
     );
 
     // Anfrage an lokale Chat-Route
-    const fetchN8N = await fetch(
-      "http://localhost:8080/n8nChat",
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
+    const fetchN8N = await fetch("http://localhost:8080/n8nChat", {
+      method: "POST",
+      body: formData,
+    });
 
     if (!fetchN8N.ok) {
       throw new Error("n8n request failed");
@@ -303,8 +279,7 @@ wearableData.post("/", upload.none(), async (req, res) => {
     await fetch(`${URL}/api/v1/users/${id}`, {
       method: "DELETE",
       headers: {
-        Authorization:
-          `Bearer ${token.access_token}`,
+        Authorization: `Bearer ${token.access_token}`,
       },
     });
   } catch (error) {
