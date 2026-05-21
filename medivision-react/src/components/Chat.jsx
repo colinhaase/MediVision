@@ -1,5 +1,7 @@
 import Markdown from "react-markdown";
 
+import { SyncLoader as Loader } from "react-spinners";
+
 function Chat({ chat, waitForResponse }) {
   // ===== Zeitformatierung =====
   // Wandelt Sekunden in Minuten:Sekunden um
@@ -49,7 +51,7 @@ function Chat({ chat, waitForResponse }) {
       {/* Ladeanimation während AI antwortet */}
       {waitForResponse && (
         <div className="animation">
-          <div className="loader"></div>
+          <Loader size="10" speedMultiplier={0.75} margin={3} color="#cdd6f4" />
         </div>
       )}
     </>

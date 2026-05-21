@@ -4,10 +4,23 @@ import Medi from "../assets/MediVisionLogo.svg?react";
 
 import { FiBarChart2, FiInfo, FiMessageSquare, FiWatch } from "react-icons/fi";
 
-function Sidebar({ setRendering, setAI, setUser, callBackend }) {
+import { MoonLoader as Loader } from "react-spinners";
+
+function Sidebar({
+  setRendering,
+  rendering,
+  setAI,
+  setUser,
+  callBackend,
+  toggleInputs,
+}) {
   // ===== Zustände =====
   // showMenu -> steuert ob Wearable-Menü sichtbar ist
+  // loadingAnalyse -> steuert ob Ladesymbol für Analyse angezeit wird
+  // isChatPage -> prüft ob chatSeite aktiv ist um Dropwdown zu aktivieren/deaktivieren
   const [showMenu, setShowMenu] = useState(false);
+  const [loadingAnalyse, setLoadingAnalyse] = useState(false);
+  const isChatPage = rendering === "chatSeite";
 
   // ===== Referenz für Dropdown =====
   // Wird genutzt um Klicks außerhalb des Menüs zu erkennen
@@ -42,6 +55,9 @@ function Sidebar({ setRendering, setAI, setUser, callBackend }) {
   // ===== Analyse starten =====
   // Sendet Anfrage an Analyse-Workflow
   function analyse() {
+    setLoadingAnalyse(true);
+    toggleInputs(true);
+
     callBackend("n8nAnalyse")
       .then((res) => res.blob())
       .then((blob) => {
@@ -56,6 +72,10 @@ function Sidebar({ setRendering, setAI, setUser, callBackend }) {
 
         a.remove();
         window.URL.revokeObjectURL(url);
+      })
+      .finally(() => {
+        toggleInputs(false);
+        setLoadingAnalyse(false);
       });
   }
 
@@ -120,7 +140,14 @@ function Sidebar({ setRendering, setAI, setUser, callBackend }) {
 
         {/* Wearable-Menü */}
         <div ref={dropdownRef} className="button2">
-          <button className="button2" onClick={() => setShowMenu(!showMenu)}>
+          <button
+            className="button2"
+            onClick={() => {
+              if (isChatPage) {
+                setShowMenu(!showMenu);
+              }
+            }}
+          >
             <FiWatch size={25} />
           </button>
 
@@ -152,7 +179,11 @@ function Sidebar({ setRendering, setAI, setUser, callBackend }) {
 
         {/* Analyse starten */}
         <button onClick={analyse} className="button2">
-          <FiBarChart2 size={25} />
+          {loadingAnalyse ? (
+            <Loader size={20} color="#cdd6f4" />
+          ) : (
+            <FiBarChart2 size={25} />
+          )}
         </button>
       </fieldset>
     </>

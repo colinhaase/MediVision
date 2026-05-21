@@ -147,8 +147,16 @@ function MediVision() {
   // ===== Aktiviert oder deaktiviert Eingaben =====
   // Wird genutzt während auf Backend-Antwort gewartet wird
   function toggleInputs(disabled) {
-    document.getElementById("userInput").disabled = disabled;
-    document.getElementById("sidebarInput").disabled = disabled;
+    const userInput = document.getElementById("userInput");
+    const sidebarInput = document.getElementById("sidebarInput");
+
+    if (userInput) {
+      userInput.disabled = disabled;
+    }
+
+    if (sidebarInput) {
+      sidebarInput.disabled = disabled;
+    }
   }
 
   // ===== Seiteninhalt rendern =====
@@ -196,9 +204,11 @@ function MediVision() {
       <div className="sidebar chatSidebar">
         <Sidebar
           setRendering={setRendering}
+          rendering={rendering}
           setAI={setAI}
           setUser={setUser}
           callBackend={callBackend}
+          toggleInputs={toggleInputs}
         />
       </div>
 
