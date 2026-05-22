@@ -13,6 +13,7 @@ function Sidebar({
   setUser,
   callBackend,
   toggleInputs,
+  setChat
 }) {
   // ===== Zustände =====
   // showMenu -> steuert ob Wearable-Menü sichtbar ist
@@ -76,6 +77,7 @@ function Sidebar({
       .finally(() => {
         toggleInputs(false);
         setLoadingAnalyse(false);
+        setChat([]);
       });
   }
 

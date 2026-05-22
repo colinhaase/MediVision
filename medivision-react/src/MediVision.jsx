@@ -209,6 +209,7 @@ function MediVision() {
           setUser={setUser}
           callBackend={callBackend}
           toggleInputs={toggleInputs}
+          setChat={setChat}
         />
       </div>
 
