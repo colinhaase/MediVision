@@ -10,6 +10,7 @@ const upload = multer();
 
 n8nAnalyse.post("/", upload.none(), async (req, res) => {
   try {
+    
     const { UUID } = req.body;
 
     // ===== Request n8n =====
@@ -48,14 +49,14 @@ n8nAnalyse.post("/", upload.none(), async (req, res) => {
     const parsed = JSON.parse(raw);
 
     console.log(parsed);
-
+    
     // ===== PDF ERSTELLEN =====
     const doc = new PDFDocument({
       margins: {
-        top: 36,
-        bottom: 36,
-        left: 36,
-        right: 36,
+        top: 40,
+        bottom: 40,
+        left: 40,
+        right: 40,
       },
     });
 
@@ -66,56 +67,130 @@ n8nAnalyse.post("/", upload.none(), async (req, res) => {
     doc.pipe(res);
 
     //überschrift
-    doc.font("Helvetica-Bold").fontSize(20);
-    doc.text("Medizinische Analyse", {
-      underline: true,
+    doc.fontSize(20);
+    doc.font("Helvetica-Bold").fillColor("#0056B3");
+    doc.text("MediVision ", { continued: true });
+
+    doc.font("Helvetica").fillColor("black");
+    doc.text("| Medizinische Analyse");
+
+    doc.moveDown(0.1);
+
+    // blaue Linie über die ganze Seitenbreite
+    const startX = doc.page.margins.left;
+    const endX = doc.page.width - doc.page.margins.right;
+
+    doc
+      .strokeColor("#0056B3")
+      .lineWidth(1.5)
+      .moveTo(startX, doc.y)
+      .lineTo(endX, doc.y)
+      .stroke();
+
+    doc.moveDown(0.5);
+
+    //basisinformationen
+    doc.font("Helvetica").fontSize(12).fillColor("black");
+    const now = new Date().toLocaleString("de-DE", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    doc.table({
+      defaultStyle: { padding: 5, backgroundColor: "#F9F9F9", border: false },
+      // Umrandungen der Tabelle setzen
+      rowStyles: (i) => {
+        if (i === 0)
+          return {
+            border: [2, 0, 1, 0],
+            borderColor: "#EEEEEE",
+          };
+        if (i === 3)
+          return {
+            border: [0, 0, 2, 0],
+            borderColor: "#EEEEEE",
+          };
+      },
+      data: [
+        [
+          { text: "Patientendaten", textColor: "#666666" },
+          { text: "Datum, Uhrzeit", textColor: "#666666" },
+        ],
+        [`Name: ${parsed.basisinformationen.name}`, now],
+        [`Geschlecht: ${parsed.basisinformationen.geschlecht}`, ""],
+        [`Alter: ${parsed.basisinformationen.alter}`, ""],
+      ],
     });
 
     doc.moveDown();
 
-    //basisinformationen
-    doc.font("Helvetica-Bold").fontSize(14);
-    doc.text("Basisinformationen:");
+    //symptome
+    doc.font("Helvetica-Bold").fontSize(14).fillColor("#0056B3");
+    doc.text("Symptomatik:");
+    doc.font("Helvetica").fontSize(12).fillColor("black");
+    doc.text(parsed.symptome);
 
-    doc.font("Helvetica").fontSize(12);
-    doc.text(`Geschlecht: ${parsed.basisinformationen.geschlecht}`);
-    doc.text(`Alter: ${parsed.basisinformationen.alter}`);
-    doc.text(`Symptome: ${parsed.basisinformationen.symptome}`);
+    doc.moveDown();
+
+    //Bildbeschreibung und/oder Werable Daten
+    doc.font("Helvetica-Bold").fontSize(14).fillColor("#0056B3");
+    doc.text("Zusatz:");
+    doc.font("Helvetica").fontSize(12).fillColor("black");
+    doc.text(parsed.zusatz);
 
     doc.moveDown();
 
     //diagnosen
-    doc.font("Helvetica-Bold").fontSize(14);
+    doc.font("Helvetica-Bold").fontSize(14).fillColor("#0056B3");
     doc.text("Differentialdiagnosen:");
 
-    doc.font("Helvetica").fontSize(12);
-    const diagnosen = parsed.differentialdiagnosen;
-    doc.table({
-      columnStyles: [150, 250, 150],
-      defaultStyle: { padding: 5 },
-      data: [
-        ["Diagnose", "Begründung", "Wahrscheinlichkeit"],
+    doc.font("Helvetica").fontSize(12).fillColor("black");
 
+    const diagnosen = parsed.differentialdiagnosen;
+
+    doc.table({
+      columnStyles: [150, 250, "*"],
+
+      defaultStyle: {
+        padding: 5,
+        backgroundColor: "#F9F9F9",
+        border: false,
+      },
+      // Umrandungen der Tabelle setzen
+      rowStyles: (i) => {
+        if (i === 0) {
+          return {
+            border: { top: 2, bottom: 2 },
+            borderColor: { top: "#EEEEEE", bottom: "#EEEEEE" },
+          };
+        }
+
+        if (i === diagnosen.length) {
+          return {
+            border: { bottom: 2 },
+            borderColor: { bottom: "#EEEEEE" },
+          };
+        }
+
+        return {
+          border: false,
+        };
+      },
+
+      data: [
         [
-          diagnosen[0].diagnose,
-          diagnosen[0].begruendung,
-          `${diagnosen[0].wahrscheinlichkeit}`,
+          { text: "Diagnose", textColor: "#666666" },
+          { text: "Begründung", textColor: "#666666" },
+          { text: "Wahrscheinlichkeit", textColor: "#666666" },
         ],
-        [
-          diagnosen[1].diagnose,
-          diagnosen[1].begruendung,
-          `${diagnosen[1].wahrscheinlichkeit}`,
-        ],
-        [
-          diagnosen[2].diagnose,
-          diagnosen[2].begruendung,
-          `${diagnosen[2].wahrscheinlichkeit}`,
-        ],
-        [
-          diagnosen[3].diagnose,
-          diagnosen[3].begruendung,
-          `${diagnosen[3].wahrscheinlichkeit}`,
-        ],
+
+        ...diagnosen.map((d) => [
+          d.diagnose,
+          d.begruendung,
+          `${d.wahrscheinlichkeit}`,
+        ]),
       ],
     });
 
@@ -123,9 +198,8 @@ n8nAnalyse.post("/", upload.none(), async (req, res) => {
 
     // prüfen ob element auf seite passt
     function addSectionWithBreak(doc, contentFunction) {
-      // Check if adding this section would go beyond the bottom margin
-      if (doc.y + 200 > doc.page.height - doc.page.margins.bottom) {
-        // 200 is a safe estimate
+      if (doc.y + 100 > doc.page.height - doc.page.margins.bottom) {
+        // Seitenumbruch falls Element nicht passt
         doc.addPage();
       }
       contentFunction();
@@ -133,20 +207,20 @@ n8nAnalyse.post("/", upload.none(), async (req, res) => {
 
     // empehlung
     addSectionWithBreak(doc, () => {
-      doc.font("Helvetica-Bold").fontSize(14);
+      doc.font("Helvetica-Bold").fontSize(14).fillColor("#0056B3");
       doc.text("Empfehlung:");
-      doc.font("Helvetica").fontSize(12);
+      doc.font("Helvetica").fontSize(12).fillColor("black");
       doc.text(parsed.empfehlung);
       doc.moveDown();
     });
 
     // Wichtiger Hinweis
     addSectionWithBreak(doc, () => {
-      doc.font("Helvetica-Bold").fontSize(14);
+      doc.font("Helvetica-Bold").fontSize(14).fillColor("#0056B3");
       doc.text("Wichtiger Hinweis:");
-      doc.font("Helvetica").fontSize(12);
+      doc.font("Helvetica").fontSize(12).fillColor("black");
       doc.text(
-        "Dieses Dokument zählt nur als erste Einschätzung. Für eine echte Diagnose wenden Sie sich bitte an Ihren Haus und/oder Fachartzt",
+        "Dieses Dokument wurde KI generiert und zählt nur als erste Einschätzung. Für eine echte Diagnose wenden Sie sich bitte an Ihren Haus und/oder Fachartzt",
       );
       doc.moveDown();
       doc.text(
