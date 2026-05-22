@@ -38,6 +38,19 @@ F --> H
 **Infoseite:**
 ![Infoseite Bild](./README/Infoseite.png)
 
+## Workflow
+
+**n8n Workflow**
+![Workflow Bild](./README/n8nWorkflow.png)
+
+Der Workflow für MediVision benötigt einen Webhook Eingang, um Nachrichten aus dem Frontend zu empfangen. Anschließend wird geprüft, ob es sich um eine normale Chatnachricht oder um eine vollständige Analyse des Chatverlaufs handelt.
+
+Je nach Anfrage werden die gesendeten Daten verarbeitet und an das lokale KI Modell weitergeleitet. Dabei können neben Textnachrichten auch Bilder sowie optionale Wearable Daten einbezogen werden. Damit die KI den bisherigen Gesprächskontext berücksichtigen kann, werden Chatverläufe temporär in einer Postgres Datenbank gespeichert.
+
+Nach der Verarbeitung sendet n8n die generierte Antwort oder Analyse wieder zurück an das Backend und anschließend an den Nutzer im Frontend.
+
+Zusätzlich enthält der Workflow einen automatischen Bereinigungsprozess. Dieser läuft stündlich und löscht alle Chats, die länger als fünf Stunden inaktiv sind. Dadurch bleiben medizinische Daten nicht dauerhaft in der Datenbank gespeichert.
+
 ## Voraussetzungen
 
 **Frontend/Backend**
