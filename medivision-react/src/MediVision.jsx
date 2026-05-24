@@ -104,45 +104,20 @@ function MediVision() {
     setWaitForResponse(false);
   }, [ai]);
 
-  // ===== Prüft ob User unten im Chat ist =====
-  // Wichtig damit automatisches Scrollen
-  // den User nicht beim Lesen stört
-  useEffect(() => {
-    const el = chatRef.current;
-    if (!el) return;
-
-    function handleScroll() {
-      const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
-
-      isAtBottom.current = distance < 80;
-    }
-
-    el.addEventListener("scroll", handleScroll);
-
-    return () => {
-      el.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
-
   // ===== Automatisches Scrollen =====
-  // Scrollt automatisch nach unten wenn:
-  // 1. User selbst Nachricht sendet
-  // 2. User bereits unten im Chat war
+  // Scrollt automatisch nach unten, wenn eine neue Nachricht hinzugefügt wird
   useEffect(() => {
     const el = chatRef.current;
     if (!el || !chat.length) return;
 
     const lastMessage = chat[chat.length - 1];
 
-    const shouldScroll = lastMessage.sender === "user" || isAtBottom.current;
-
-    if (!shouldScroll) return;
-
     el.scrollTo({
       top: el.scrollHeight,
+      // Smooth scroll for user messages, instant for AI to feel responsive
       behavior: lastMessage.sender === "user" ? "smooth" : "auto",
     });
-  }, [chat]);
+  }, [chat.length]);
 
   // ===== Aktiviert oder deaktiviert Eingaben =====
   // Wird genutzt während auf Backend-Antwort gewartet wird
