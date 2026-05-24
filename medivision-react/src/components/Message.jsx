@@ -40,7 +40,10 @@ function Message({ setUser, setAI, callBackend }) {
     setUser({
       text: question,
       image: preview,
-      time: new Date().toLocaleTimeString("en-GB"),
+      time: new Date().toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit"
+      }),
     });
 
     // Anfrage an Backend schicken
@@ -62,7 +65,10 @@ function Message({ setUser, setAI, callBackend }) {
       .then((json) => {
         setAI({
           text: json.answer,
-          time: new Date().toLocaleTimeString("en-GB"),
+          time: new Date().toLocaleTimeString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit"
+          }),
         });
       });
   }

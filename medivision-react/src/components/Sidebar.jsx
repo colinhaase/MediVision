@@ -13,7 +13,7 @@ function Sidebar({
   setUser,
   callBackend,
   toggleInputs,
-  setChat
+  setChat,
 }) {
   // ===== Zustände =====
   // showMenu -> steuert ob Wearable-Menü sichtbar ist
@@ -91,7 +91,10 @@ function Sidebar({
       .then((json) => {
         setAI({
           text: json.answer,
-          time: new Date().toLocaleTimeString("en-GB"),
+          time: new Date().toLocaleTimeString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
           remaining: 300,
           source: "wearable",
         });
